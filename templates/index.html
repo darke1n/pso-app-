@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Pso-App — Трекер здоровья кожи</title>
+  <link rel="stylesheet" href="/static/css/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="top-header">
+      <div class="brand">
+        <div class="brand-icon" aria-hidden="true">🌿</div>
+        <div>
+          <h1>Pso-App</h1>
+          <p class="subtitle">Трекер здоровья кожи</p>
+        </div>
+      </div>
+      <button id="demoSeedBtn" class="btn-ghost-sm" type="button" title="Добавить тестовые данные за 14 дней">
+        + Демо-данные
+      </button>
+    </header>
+
+    <main class="main-content">
+      <!-- TAB 1: CHECK-IN -->
+      <section id="tab-checkin" class="tab-panel active">
+        <div class="card">
+          <div class="card-header-row">
+            <h2>Ежедневный чек-ин</h2>
+            <span id="existingBadge" class="badge badge-info hidden">Редактирование дня</span>
+          </div>
+
+          <form id="checkinForm" class="form-stack">
+            <div class="form-group">
+              <label for="checkinDate">Дата</label>
+              <input type="date" id="checkinDate" name="date" required />
+            </div>
+
+            <div class="metric-box">
+              <div class="metric-header">
+                <label for="skinScore">Состояние кожи</label>
+                <span id="skinScoreVal" class="metric-pill pill-teal">7 / 10</span>
+              </div>
+              <input type="range" id="skinScore" name="skin_score" min="1" max="10" value="7" class="slider slider-teal" />
+              <div class="scale-labels">
+                <span>1 — сильное обострение</span>
+                <span>10 — чистая кожа</span>
+              </div>
+            </div>
+
+            <div class="metric-box">
+              <div class="metric-header">
+                <label for="stressLevel">Уровень стресса</label>
+                <span id="stressLevelVal" class="metric-pill pill-coral">4 / 10</span>
+              </div>
+              <input type="range" id="stressLevel" name="stress_level" min="1" max="10" value="4" class="slider slider-coral" />
+              <div class="scale-labels">
+                <span>1 — спокойно</span>
+                <span>10 — сильный стресс</span>
+              </div>
+            </div>
+
+            <div class="metric-box">
+              <div class="metric-header">
+                <label for="sleepQuality">Качество сна</label>
+                <span id="sleepQualityVal" class="metric-pill pill-indigo">7 / 10</span>
+              </div>
+              <input type="range" id="sleepQuality" name="sleep_quality" min="1" max="10" value="7" class="slider slider-indigo" />
+              <div class="scale-labels">
+                <span>1 — очень плохой</span>
+                <span>10 — отличный сон</span>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Триггеры (питание, погода, факторы)</label>
+              <div id="triggersGrid" class="chips-grid"></div>
+              <div class="custom-trigger-row">
+                <input type="text" id="customTriggerInput" placeholder="Добавить свой триггер..." maxlength="40" />
+                <button type="button" id="addCustomTriggerBtn" class="btn-secondary">Добавить</button>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="checkinNote">Заметка за день</label>
+              <textarea id="checkinNote" name="note" rows="3" placeholder="Самочувствие, уход, новые средства, наблюдения..."></textarea>
+            </div>
+
+            <button type="submit" id="saveCheckinBtn" class="btn-primary">
+              Сохранить чек-ин
+            </button>
+          </form>
+        </div>
+      </section>
+
+      <!-- TAB 2: PHOTOS -->
+      <section id="tab-photos" class="tab-panel">
+        <div class="card">
+          <h2>Фото прогресса</h2>
+          <form id="photoForm" class="form-stack">
+            <div class="form-row-2">
+              <div class="form-group">
+                <label for="photoDate">Дата</label>
+                <input type="date" id="photoDate" name="date" required />
+              </div>
+              <div class="form-group">
+                <label for="skinZone">Зона кожи</label>
+                <select id="skinZone" name="skin_zone" required>
+                  <option value="Локти">Локти</option>
+                  <option value="Колени">Колени</option>
+                  <option value="Лицо">Лицо</option>
+                  <option value="Волосистая часть головы">Голова</option>
+                  <option value="Спина">Спина</option>
+                  <option value="Кисти рук">Кисти рук</option>
+                  <option value="Ноги">Ноги</option>
+                  <option value="Другое">Другое</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="photoFile">Фотография</label>
+              <label class="upload-dropzone" for="photoFile">
+                <input type="file" id="photoFile" name="file" accept="image/*" required hidden />
+                <div id="uploadPlaceholder">
+                  <div class="upload-icon">📷</div>
+                  <p>Нажмите, чтобы выбрать фото</p>
+                  <span>JPG, PNG, WEBP до 10 МБ</span>
+                </div>
+                <img id="photoPreview" class="upload-preview hidden" alt="Предпросмотр фото" />
+              </label>
+            </div>
+
+            <div class="form-group">
+              <label for="photoNote">Комментарий (необязательно)</label>
+              <input type="text" id="photoNote" name="note" placeholder="Например: после нанесения крема, утро" maxlength="200" />
+            </div>
+
+            <button type="submit" id="uploadPhotoBtn" class="btn-primary">
+              Загрузить фото
+            </button>
+          </form>
+        </div>
+
+        <div class="card">
+          <div class="card-header-row">
+            <h3>Галерея</h3>
+            <select id="photoZoneFilter" class="select-compact" aria-label="Фильтр по зоне кожи">
+              <option value="Все">Все зоны</option>
+              <option value="Локти">Локти</option>
+              <option value="Колени">Колени</option>
+              <option value="Лицо">Лицо</option>
+              <option value="Волосистая часть головы">Голова</option>
+              <option value="Спина">Спина</option>
+              <option value="Кисти рук">Кисти рук</option>
+              <option value="Ноги">Ноги</option>
+              <option value="Другое">Другое</option>
+            </select>
+          </div>
+          <div id="photosGrid" class="photos-grid"></div>
+        </div>
+      </section>
+
+      <!-- TAB 3: HISTORY & CHART -->
+      <section id="tab-history" class="tab-panel">
+        <div class="card">
+          <div class="card-header-row">
+            <h2>Динамика</h2>
+            <div class="segmented-control" role="group" aria-label="Период графика">
+              <button type="button" class="seg-btn active" data-days="14">14 дней</button>
+              <button type="button" class="seg-btn" data-days="30">30 дней</button>
+            </div>
+          </div>
+          <div class="chart-wrap">
+            <canvas id="trendChart"></canvas>
+          </div>
+          <p id="chartEmptyMsg" class="empty-hint hidden">
+            Пока нет данных за выбранный период. Добавьте чек-ин или нажмите «+ Демо-данные».
+          </p>
+        </div>
+
+        <div class="card">
+          <div class="card-header-row">
+            <h3>История записей</h3>
+            <span id="historyCount" class="muted-text">0 записей</span>
+          </div>
+          <div id="historyList" class="history-list"></div>
+        </div>
+      </section>
+
+      <!-- TAB 4: ANALYTICS -->
+      <section id="tab-analytics" class="tab-panel">
+        <div class="summary-grid" id="analyticsSummary">
+          <div class="stat-card">
+            <span class="stat-label">Средняя кожа</span>
+            <strong id="statAvgSkin" class="stat-value text-teal">—</strong>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Средний стресс</span>
+            <strong id="statAvgStress" class="stat-value text-coral">—</strong>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Средний сон</span>
+            <strong id="statAvgSleep" class="stat-value text-indigo">—</strong>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Тренд кожи</span>
+            <strong id="statTrend" class="stat-value">—</strong>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Корреляция триггеров</h2>
+          <p class="muted-desc">
+            Сравнение оценки кожи в дни с отмеченным триггером и без него. Отрицательная разница означает ухудшение состояния.
+          </p>
+          <div id="correlationsList" class="correlations-list"></div>
+        </div>
+
+        <div class="card">
+          <h3>Стресс и сон</h3>
+          <div id="factorInsightsList" class="correlations-list"></div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav" aria-label="Основная навигация">
+      <button type="button" class="nav-btn active" data-tab="checkin">
+        <span class="nav-icon">📝</span>
+        <span>Чек-ин</span>
+      </button>
+      <button type="button" class="nav-btn" data-tab="photos">
+        <span class="nav-icon">📷</span>
+        <span>Фото</span>
+      </button>
+      <button type="button" class="nav-btn" data-tab="history">
+        <span class="nav-icon">📈</span>
+        <span>История</span>
+      </button>
+      <button type="button" class="nav-btn" data-tab="analytics">
+        <span class="nav-icon">🔍</span>
+        <span>Аналитика</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- Lightbox Modal for Photos -->
+  <div id="photoModal" class="modal hidden" role="dialog" aria-modal="true">
+    <div class="modal-backdrop" id="modalBackdrop"></div>
+    <div class="modal-content">
+      <button type="button" id="closeModalBtn" class="modal-close" aria-label="Закрыть">✕</button>
+      <img id="modalImg" src="" alt="Фото прогресса" />
+      <div class="modal-meta">
+        <div>
+          <strong id="modalZone"></strong> · <span id="modalDate"></span>
+          <p id="modalNote"></p>
+        </div>
+        <button type="button" id="modalDeleteBtn" class="btn-danger-sm">Удалить</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
